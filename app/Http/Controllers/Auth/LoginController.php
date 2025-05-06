@@ -114,6 +114,26 @@ class LoginController extends Controller
             'password' => 'required'
         ]);
 
+        $admin = \App\Models\Admin::where('Username', $credentials['username'])->first();
+
+        if (!$admin) {
+            return back()->withErrors([
+                'username' => 'Invalid credentials.',
+            ]);
+        }
+
+        if ($admin->Status === 'Suspended') {
+            return back()->withErrors([
+                'username' => 'Your account has been suspended. Please contact management.',
+            ]);
+        }
+
+        if ($admin->Status === 'Inactive') {
+            return back()->withErrors([
+                'username' => 'Your account is inactive. Please contact management to activate your account.',
+            ]);
+        }
+
         if (Auth::guard('admin')->attempt($credentials)) {
             $request->session()->regenerate();
             return redirect()->intended(route('admin.dashboard'));

@@ -48,7 +48,13 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="date_of_birth" required>
+                                    <?php 
+                                        $maxDate = date('Y-m-d', strtotime('-18 years'));
+                                    ?>
+                                    <input type="date" class="form-control" name="date_of_birth" 
+                                           max="{{ $maxDate }}" 
+                                           required>
+                                    <div class="form-text">Must be at least 18 years old</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Nationality <span class="text-danger">*</span></label>
@@ -56,11 +62,17 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">National ID <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="national_id" required>
+                                    <input type="text" class="form-control" name="national_id" 
+                                           maxlength="10" pattern="[0-9]{10}"
+                                           placeholder="Enter 10 digits" required>
+                                    <div class="form-text">National ID must be 10 digits</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">ID Expiry Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="id_expiry_date" required>
+                                    <input type="date" class="form-control" name="id_expiry_date" 
+                                           min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                                           required>
+                                    <div class="form-text">ID must not be expired</div>
                                 </div>
                             </div>
                         </div>
@@ -239,6 +251,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.remove('is-invalid');
             }
         });
+    });
+
+    // Add date validation
+    const dobInput = document.querySelector('input[name="date_of_birth"]');
+    dobInput.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        const age = today.getFullYear() - selectedDate.getFullYear();
+        
+        if (age < 18) {
+            this.value = ''; // Clear invalid date
+            alert('Employee must be at least 18 years old');
+        }
+    });
+
+    // Add ID expiry date validation
+    const idExpiryInput = document.querySelector('input[name="id_expiry_date"]');
+    idExpiryInput.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        
+        if (selectedDate <= today) {
+            this.value = ''; // Clear invalid date
+            alert('ID Expiry Date must be in the future');
+        }
     });
 
     // Prevent form submission if current step is invalid
