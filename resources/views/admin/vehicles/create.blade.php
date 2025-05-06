@@ -47,14 +47,26 @@
                                 <option value="">Select a make</option>
                                 <option value="Toyota">Toyota</option>
                                 <option value="Hyundai">Hyundai</option>
-                                <option value="Nissan">Nissan</option>
                                 <option value="Honda">Honda</option>
-                                <option value="Ford">Ford</option>
-                                <option value="Chevrolet">Chevrolet</option>
+                                <option value="Nissan">Nissan</option>
                                 <option value="Kia">Kia</option>
+                                <option value="Chevrolet">Chevrolet</option>
+                                <option value="Ford">Ford</option>
+                                <option value="GMC">GMC</option>
+                                <option value="Mitsubishi">Mitsubishi</option>
+                                <option value="Mazda">Mazda</option>
+                                <option value="Changan">Changan</option>
+                                <option value="MG">MG</option>
+                                <option value="Geely">Geely</option>
+                                <option value="Geely">Chery</option>
+                                <option value="Haval">Haval</option>
+                                <option value="Jetour">Jetour</option>
+                                <option value="Genesis">Genesis</option>
                                 <option value="Mercedes-Benz">Mercedes-Benz</option>
                                 <option value="BMW">BMW</option>
                                 <option value="Lexus">Lexus</option>
+                                <option value="Audi">Audi</option>
+                                <option value="Infiniti">Infiniti</option>
                             </select>
                             @error('make')
                                 <div class="text-danger mt-1">{{ $message }}</div>
@@ -102,7 +114,11 @@
                         
                         <div class="col-md-4">
                             <label for="license_plate" class="form-label">License Plate <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="license_plate" name="license_plate" maxlength="7" required>
+                            <input type="text" class="form-control" id="license_plate" name="license_plate" 
+                                   pattern="^[A-Za-z]{1,3}[0-9]{1,4}$"
+                                   maxlength="7" required placeholder="e.g ABC1234"
+                                   ">
+                            <div class="form-text">Enter 1-3 letters followed by 1-4 numbers (e.g., SSF1234, A10, A1, AB123)</div>
                             @error('license_plate')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -129,7 +145,9 @@
                         
                         <div class="col-md-6">
                             <label for="date_of_expiry" class="form-label">Date of Expiry</label>
-                            <input type="date" class="form-control" id="date_of_expiry" name="date_of_expiry">
+                            <input type="date" class="form-control" id="date_of_expiry" name="date_of_expiry" 
+                                   min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
+                            <div class="form-text">Expiry date must be in the future</div>
                             @error('date_of_expiry')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -193,7 +211,6 @@
                             <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select" id="status" name="status" required>
                                 <option value="Available" selected>Available</option>
-                                <option value="Rented">Rented</option>
                                 <option value="Maintenance">Maintenance</option>
                             </select>
                             @error('status')
@@ -227,12 +244,15 @@
                                 
                                 <div class="mb-3">
                                     <label for="image_path" class="form-label">Upload Vehicle Image</label>
-                                    <input class="form-control" type="file" id="image_path" name="image_path" accept="image/*">
+                                    <input class="form-control" type="file" id="image_path" name="image_path" 
+                                           accept="image/jpeg,image/png,image/jpg" 
+                                           data-max-size="2048">
                                     <small class="form-text text-muted">
                                         Recommended size: 800x600 pixels, Max file size: 2MB.<br>
-                                        The image will be saved with the naming convention: [Make]-[Model]-[Year].jpg<br>
-                                        If no image is uploaded, the default image will be used.
+                                        Allowed formats: JPG, JPEG, PNG<br>
+                                        The image will be saved with the naming convention: [Make]-[Model]-[Year].jpg
                                     </small>
+                                    <div class="invalid-feedback" id="image-error"></div>
                                 </div>
                             </div>
                             
@@ -478,6 +498,118 @@
             'GX': 'SUV',
             'LX': 'SUV',
             'RX L': 'SUV'
+        },
+        GMC: {
+            'Acadia': 'SUV',
+            'Terrain': 'Crossover',
+            'Yukon': 'SUV',
+            'Sierra': 'SUV',
+            'Canyon': 'SUV'
+        },
+        Mitsubishi: {
+            'Mirage': 'Small Cars',
+            'Attrage': 'Sedan',
+            'Lancer': 'Sedan',
+            'Eclipse Cross': 'Crossover',
+            'ASX': 'Crossover',
+            'Outlander': 'SUV',
+            'Pajero': 'SUV',
+            'Montero Sport': 'SUV'
+        },
+        Mazda: {
+            'Mazda2': 'Small Cars',
+            'Mazda3': 'Sedan',
+            'Mazda6': 'Sedan',
+            'CX-3': 'Crossover',
+            'CX-30': 'Crossover',
+            'CX-5': 'SUV',
+            'CX-9': 'SUV'
+        },
+        Changan: {
+            'Alsvin': 'Sedan',
+            'Eado': 'Sedan',
+            'CS15': 'Crossover',
+            'CS35': 'Crossover',
+            'CS55': 'SUV',
+            'CS75': 'SUV',
+            'CS85': 'SUV',
+            'CS95': 'SUV'
+        },
+        MG: {
+            'MG3': 'Small Cars',
+            'MG4': 'Small Cars',
+            'MG5': 'Sedan',
+            'MG6': 'Sedan',
+            'ZS': 'Crossover',
+            'HS': 'Crossover',
+            'RX5': 'SUV',
+            'RX8': 'SUV'
+        },
+        Geely: {
+            'GC6': 'Sedan',
+            'Emgrand': 'Sedan',
+            'Coolray': 'Crossover',
+            'Azkarra': 'Crossover',
+            'Okavango': 'SUV',
+            'Monjaro': 'SUV',
+            'X70': 'SUV'
+        },
+        Chery: {
+            'Arrizo3': 'Sedan',
+            'Arrizo5': 'Sedan',
+            'Arrizo7': 'Sedan',
+            'Tiggo2': 'Crossover',
+            'Tiggo3': 'Crossover',
+            'Tiggo4': 'Crossover',
+            'Tiggo7': 'SUV',
+            'Tiggo8': 'SUV'
+        },
+        Haval: {
+            'Jolion': 'Crossover',
+            'H2': 'Crossover',
+            'H4': 'Crossover',
+            'H6': 'Crossover',
+            'H8': 'SUV',
+            'H9': 'SUV',
+            'Big Dog': 'SUV'
+        },
+        Jetour: {
+            'X70': 'Crossover',
+            'X90': 'SUV',
+            'X95': 'SUV',
+            'Dashing': 'Crossover'
+        },
+        Genesis: {
+            'G70': 'Sedan',
+            'G80': 'Sedan',
+            'G90': 'Sedan',
+            'GV60': 'Crossover',
+            'GV70': 'Crossover',
+            'GV80': 'SUV'
+        },
+        Audi: {
+            'A1': 'Small Cars',
+            'A3': 'Sedan',
+            'A4': 'Sedan',
+            'A5': 'Sedan',
+            'A6': 'Sedan',
+            'A7': 'Sedan',
+            'A8': 'Sedan',
+            'Q2': 'Crossover',
+            'Q3': 'Crossover',
+            'Q5': 'SUV',
+            'Q7': 'SUV',
+            'Q8': 'SUV'
+        },
+        Infiniti: {
+            'Q30': 'Small Cars',
+            'Q50': 'Sedan',
+            'Q60': 'Sedan',
+            'QX30': 'Crossover',
+            'QX50': 'Crossover',
+            'QX55': 'Crossover',
+            'QX60': 'SUV',
+            'QX80': 'SUV'
         }
     };
 
@@ -711,6 +843,78 @@
         
         // Initialize form
         updateStep(currentStep);
+
+        // Add date of expiry validation
+        const expiryInput = document.querySelector('input[name="date_of_expiry"]');
+        expiryInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            
+            if (selectedDate <= today) {
+                this.value = ''; // Clear invalid date
+                alert('Expiry date must be in the future');
+            }
+        });
+
+        // Add license plate validation
+        const licensePlateInput = document.getElementById('license_plate');
+        licensePlateInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+            if (!this.value.match(/^[A-Z]{0,3}[0-9]{0,4}$/)) {
+                this.value = this.value.replace(/[^A-Z0-9]/g, '');
+                const letters = this.value.match(/^[A-Z]+/) || [''];
+                const numbers = this.value.match(/[0-9]+$/) || [''];
+                this.value = letters[0].slice(0,3) + numbers[0].slice(0,4);
+            }
+        });
+
+        // Add image validation
+        const imageInput = document.getElementById('image_path');
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            const errorDiv = document.getElementById('image-error');
+            
+            // Reset validation
+            this.classList.remove('is-invalid');
+            errorDiv.textContent = '';
+            
+            if (file) {
+                // Check file type
+                if (!allowedTypes.includes(file.type)) {
+                    this.classList.add('is-invalid');
+                    errorDiv.textContent = 'Invalid file type. Only JPG, JPEG, and PNG files are allowed.';
+                    this.value = ''; // Clear the input
+                    previewImage.src = '{{ asset("images/cars/default.jpg") }}';
+                    return;
+                }
+                
+                // Check file size
+                if (file.size > maxSize) {
+                    this.classList.add('is-invalid');
+                    errorDiv.textContent = 'File size must be less than 2MB.';
+                    this.value = ''; // Clear the input
+                    previewImage.src = '{{ asset("images/cars/default.jpg") }}';
+                    return;
+                }
+                
+                // Preview valid image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        if (this.width < 800 || this.height < 600) {
+                            imageInput.classList.add('is-invalid');
+                            errorDiv.textContent = 'Image dimensions should be at least 800x600 pixels.';
+                        }
+                    };
+                    img.src = e.target.result;
+                    previewImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     });
 </script>
 @endpush
