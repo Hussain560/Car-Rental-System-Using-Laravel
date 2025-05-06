@@ -125,8 +125,8 @@
                         </div>
                         
                         <div class="col-md-4">
-                            <label for="color" class="form-label">Color</label>
-                            <input type="text" class="form-control" id="color" name="color" maxlength="30">
+                            <label for="color" class="form-label">Color <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="color" name="color" maxlength="30" required>
                             @error('color')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -134,9 +134,11 @@
                         
                         <div class="col-md-6">
                             <label for="serial_number" class="form-label">Serial Number</label>
-                            <input type="text" class="form-control" id="serial_number" name="serial_number" maxlength="7" placeholder="1234567" pattern="[0-9]{7}">
+                            <input type="text" class="form-control" id="serial_number" name="serial_number" 
+                                   maxlength="7" placeholder="1234567" pattern="[0-9]{7}"
+                                   onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                             <small class="form-text text-muted">
-                                Enter the 7-digit serial number found on the vehicle registration card.
+                                Enter the 7-digit serial number found on the vehicle registration card (numbers only).
                             </small>
                             @error('serial_number')
                                 <div class="text-danger mt-1">{{ $message }}</div>
@@ -219,8 +221,8 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="office_id" class="form-label">Office Location</label>
-                            <select class="form-select" id="office_id" name="office_id">
+                            <label for="office_id" class="form-label">Office Location <span class="text-danger">*</span></label>
+                            <select class="form-select" id="office_id" name="office_id" required>
                                 <option value="">Select an office</option>
                                 @foreach($offices as $office)
                                     <option value="{{ $office->OfficeID }}">{{ $office->Location }}</option>
@@ -245,14 +247,17 @@
                                 <div class="mb-3">
                                     <label for="image_path" class="form-label">Upload Vehicle Image</label>
                                     <input class="form-control" type="file" id="image_path" name="image_path" 
-                                           accept="image/jpeg,image/png,image/jpg" 
-                                           data-max-size="2048">
+                                           accept="image/jpeg,image/png,image/jpg" onchange="validateImage(this)">
                                     <small class="form-text text-muted">
+                                        Allowed formats: JPG, JPEG, PNG only.<br>
                                         Recommended size: 800x600 pixels, Max file size: 2MB.<br>
-                                        Allowed formats: JPG, JPEG, PNG<br>
-                                        The image will be saved with the naming convention: [Make]-[Model]-[Year].jpg
+                                        The image will be saved with the naming convention: [Make]-[Model]-[Year].jpg<br>
+                                        If no image is uploaded, the default image will be used.
                                     </small>
                                     <div class="invalid-feedback" id="image-error"></div>
+                                    <div class="alert alert-danger mt-2 d-none" id="file-size-error">
+                                        File is too large! Maximum size allowed is 2MB.
+                                    </div>
                                 </div>
                             </div>
                             
@@ -294,6 +299,9 @@
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between">
                                         <span>License Plate:</span><span id="summary-license-plate"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Office Location:</span><span id="summary-office-location"></span>
                                     </li>
                                 </ul>
                             </div>
@@ -540,6 +548,7 @@
             'MG4': 'Small Cars',
             'MG5': 'Sedan',
             'MG6': 'Sedan',
+            'GT': 'Sedan',
             'ZS': 'Crossover',
             'HS': 'Crossover',
             'RX5': 'SUV',
@@ -748,6 +757,11 @@
             
             document.getElementById('summary-passenger-capacity').textContent = document.getElementById('passenger_capacity').value;
             document.getElementById('summary-license-plate').textContent = document.getElementById('license_plate').value;
+            
+            // Add office location to summary
+            const officeSelect = document.getElementById('office_id');
+            const selectedOffice = officeSelect.options[officeSelect.selectedIndex];
+            document.getElementById('summary-office-location').textContent = selectedOffice.text || 'Not selected';
         }
         
         // Validate current step
@@ -756,7 +770,7 @@
             
             if (step === 1) {
                 // Basic Info validation
-                const requiredFields = ['make', 'model', 'year', 'license_plate'];
+                const requiredFields = ['make', 'model', 'year', 'license_plate', 'color'];  // Added 'color'
                 requiredFields.forEach(field => {
                     const input = document.getElementById(field);
                     if (!input.value.trim()) {
@@ -807,13 +821,30 @@
                     doors.classList.remove('is-invalid');
                 }
             } else if (step === 3) {
-                // Status validation
+                // Status & Location validation
                 const status = document.getElementById('status');
+                const officeLocation = document.getElementById('office_id');
+
                 if (!status.value) {
                     status.classList.add('is-invalid');
                     isValid = false;
                 } else {
                     status.classList.remove('is-invalid');
+                }
+
+                if (!officeLocation.value) {
+                    officeLocation.classList.add('is-invalid');
+                    // Create or update error message
+                    let errorDiv = officeLocation.nextElementSibling;
+                    if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.classList.add('invalid-feedback');
+                        officeLocation.parentNode.appendChild(errorDiv);
+                    }
+                    errorDiv.textContent = 'Please select an office location';
+                    isValid = false;
+                } else {
+                    officeLocation.classList.remove('is-invalid');
                 }
             }
             
@@ -838,6 +869,13 @@
         form.addEventListener('submit', function(e) {
             if (!validateStep(currentStep)) {
                 e.preventDefault();
+            }
+            const imageInput = document.getElementById('image_path');
+            if (imageInput.files.length > 0) {
+                const isValid = validateImage(imageInput);
+                if (!isValid) {
+                    e.preventDefault();
+                }
             }
         });
         
@@ -868,52 +906,65 @@
             }
         });
 
-        // Add image validation
-        const imageInput = document.getElementById('image_path');
-        imageInput.addEventListener('change', function() {
-            const file = this.files[0];
-            const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        // Add serial number validation
+        const serialInput = document.getElementById('serial_number');
+        serialInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Update image validation function
+        function validateImage(input) {
+            const file = input.files[0];
             const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            const errorDiv = document.getElementById('image-error');
+            const maxSize = 2 * 1024 * 1024; // 2MB
             
-            // Reset validation
-            this.classList.remove('is-invalid');
+            const errorDiv = document.getElementById('image-error');
+            const sizeErrorDiv = document.getElementById('file-size-error');
+            input.classList.remove('is-invalid');
             errorDiv.textContent = '';
+            sizeErrorDiv.classList.add('d-none');
             
             if (file) {
-                // Check file type
-                if (!allowedTypes.includes(file.type)) {
-                    this.classList.add('is-invalid');
-                    errorDiv.textContent = 'Invalid file type. Only JPG, JPEG, and PNG files are allowed.';
-                    this.value = ''; // Clear the input
-                    previewImage.src = '{{ asset("images/cars/default.jpg") }}';
-                    return;
-                }
-                
-                // Check file size
+                // Check file size first
                 if (file.size > maxSize) {
-                    this.classList.add('is-invalid');
-                    errorDiv.textContent = 'File size must be less than 2MB.';
-                    this.value = ''; // Clear the input
-                    previewImage.src = '{{ asset("images/cars/default.jpg") }}';
-                    return;
+                    input.value = '';
+                    document.getElementById('preview-image').src = '{{ asset("images/cars/default.jpg") }}';
+                    input.classList.add('is-invalid');
+                    errorDiv.textContent = 'File size must be less than 2MB';
+                    sizeErrorDiv.classList.remove('d-none');
+                    sizeErrorDiv.textContent = `Current file size: ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maximum allowed: 2MB`;
+                    return false;
+                }
+
+                // Then check file type
+                if (!allowedTypes.includes(file.type)) {
+                    input.value = '';
+                    document.getElementById('preview-image').src = '{{ asset("images/cars/default.jpg") }}';
+                    input.classList.add('is-invalid');
+                    errorDiv.textContent = 'Invalid file type. Please upload JPG, JPEG or PNG files only.';
+                    return false;
                 }
                 
-                // Preview valid image
+                // Valid file, show preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        if (this.width < 800 || this.height < 600) {
-                            imageInput.classList.add('is-invalid');
-                            errorDiv.textContent = 'Image dimensions should be at least 800x600 pixels.';
-                        }
-                    };
-                    img.src = e.target.result;
-                    previewImage.src = e.target.result;
-                };
+                    document.getElementById('preview-image').src = e.target.result;
+                }
                 reader.readAsDataURL(file);
+                return true;
             }
+            return true;
+        }
+
+        // Add form validation for image on submit
+        form.addEventListener('submit', function(e) {
+            const imageInput = document.getElementById('image_path');
+            if (imageInput.files.length > 0 && !validateImage(imageInput)) {
+                e.preventDefault();
+                // Scroll to error message
+                document.querySelector('.image-upload-area').scrollIntoView({ behavior: 'smooth' });
+            }
+            // ...rest of your form validation...
         });
     });
 </script>

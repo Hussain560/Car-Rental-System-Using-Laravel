@@ -89,7 +89,7 @@ class VehicleController extends Controller
             'status' => 'required|in:Available,Rented,Maintenance',
             'image_path' => 'nullable|mimes:jpeg,png,jpg,gif|max:2048',
             'daily_rate' => 'nullable|numeric',
-            'office_id' => 'nullable|exists:offices,OfficeID',
+            'office_id' => 'required|exists:offices,OfficeID',  // Changed from nullable to required
             'passenger_capacity' => 'required|integer|min:1',
             'luggage_capacity' => 'required|integer|min:0',
             'doors' => 'required|integer|min:2'
@@ -152,7 +152,7 @@ class VehicleController extends Controller
             'status' => 'required|in:Available,Rented,Maintenance',
             'image_path' => 'nullable|mimes:jpeg,png,jpg,gif|max:2048',
             'daily_rate' => 'nullable|numeric',
-            'office_id' => 'nullable|exists:offices,OfficeID',
+            'office_id' => 'required|exists:offices,OfficeID',  // Changed from nullable to required
             'passenger_capacity' => 'required|integer|min:1',
             'luggage_capacity' => 'required|integer|min:0',
             'doors' => 'required|integer|min:2'
