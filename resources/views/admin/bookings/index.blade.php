@@ -42,6 +42,7 @@
                         <option value="">All Status</option>
                         <option value="Pending" {{ request('status') === 'Pending' ? 'selected' : '' }}>Pending</option>
                         <option value="Confirmed" {{ request('status') === 'Confirmed' ? 'selected' : '' }}>Confirmed</option>
+                        <option value="Active Rental" {{ request('status') === 'Active Rental' ? 'selected' : '' }}>Active Rental</option>
                         <option value="Completed" {{ request('status') === 'Completed' ? 'selected' : '' }}>Completed</option>
                         <option value="Cancelled" {{ request('status') === 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
                     </select>
@@ -54,8 +55,15 @@
                     <label for="date_to" class="form-label">To</label>
                     <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request('date_to') }}">
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-filter me-1"></i> Apply Filters
+                    </button>
+                    @if(request()->hasAny(['status', 'date_from', 'date_to']))
+                    <a href="{{ route('admin.bookings.index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Clear
+                    </a>
+                    @endif
                 </div>
             </form>
         </div>
@@ -174,9 +182,10 @@
                         <td><x-currency :amount="$booking->TotalCost" /></td>
                         <td>
                             <span class="badge bg-{{ 
-                                $booking->Status === 'Pending' ? 'warning' : 
-                                ($booking->Status === 'Confirmed' ? 'success' : 
-                                ($booking->Status === 'Completed' ? 'info' : 'danger')) 
+                                $booking->Status === 'Pending' ? 'warning text-dark' : 
+                                ($booking->Status === 'Confirmed' ? 'info text-white' : 
+                                ($booking->Status === 'Active Rental' ? 'primary' :
+                                ($booking->Status === 'Completed' ? 'success' : 'danger'))) 
                             }}">
                                 {{ $booking->Status }}
                             </span>
@@ -200,19 +209,27 @@
                                         </button>
                                     </li>
                                     @endif
-                                    @if(in_array($booking->Status, ['Pending', 'Confirmed']))
+                                    @if($booking->Status === 'Confirmed')
+                                    <li>
+                                        <button type="button" class="dropdown-item" data-bs-toggle="modal" 
+                                                data-bs-target="#startRentalModal{{ $booking->BookingID }}">
+                                            <i class="bi bi-car-front me-2"></i> Start Rental
+                                        </button>
+                                    </li>
+                                    @endif
+                                    @if($booking->Status === 'Active Rental')
+                                    <li>
+                                        <button type="button" class="dropdown-item" data-bs-toggle="modal" 
+                                                data-bs-target="#completeModal{{ $booking->BookingID }}">
+                                            <i class="bi bi-check2-all me-2"></i> Complete Rental
+                                        </button>
+                                    </li>
+                                    @endif
+                                    @if(in_array($booking->Status, ['Pending']))
                                     <li>
                                         <button type="button" class="dropdown-item" data-bs-toggle="modal" 
                                                 data-bs-target="#cancelModal{{ $booking->BookingID }}">
                                             <i class="bi bi-x-circle me-2"></i> Cancel Booking
-                                        </button>
-                                    </li>
-                                    @endif
-                                    @if($booking->Status === 'Confirmed')
-                                    <li>
-                                        <button type="button" class="dropdown-item" data-bs-toggle="modal" 
-                                                data-bs-target="#completeModal{{ $booking->BookingID }}">
-                                            <i class="bi bi-check2-all me-2"></i> Mark as Completed
                                         </button>
                                     </li>
                                     @endif
@@ -221,7 +238,7 @@
 
                             <!-- Confirm Modal -->
                             @if($booking->Status === 'Pending')
-                            <div class="modal fade" id="confirmModal{{ $booking->BookingID }}" tabindex="-1">
+                            <div class="modal fade confirmation-modal" id="confirmModal{{ $booking->BookingID }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -232,12 +249,20 @@
                                             @csrf
                                             @method('PUT')
                                             <div class="modal-body">
+                                                <h6 class="mb-3">Please ensure the following before confirming:</h6>
+                                                <ul class="mb-4">
+                                                    <li class="mb-2">Customer details are verified</li>
+                                                    <li class="mb-2">Vehicle is available for the dates</li>
+                                                    <li class="mb-2">Deposit has been secured</li>
+                                                </ul>
                                                 <p>Are you sure you want to confirm this booking?</p>
                                                 <input type="hidden" name="status" value="Confirmed">
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success">Confirm Booking</button>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-check2 me-1"></i> Confirm Booking
+                                                </button>
                                             </div>
                                         </form>
                                     </div>
@@ -247,7 +272,7 @@
 
                             <!-- Cancel Modal -->
                             @if(in_array($booking->Status, ['Pending', 'Confirmed']))
-                            <div class="modal fade" id="cancelModal{{ $booking->BookingID }}" tabindex="-1">
+                            <div class="modal fade confirmation-modal" id="cancelModal{{ $booking->BookingID }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -258,12 +283,20 @@
                                             @csrf
                                             @method('PUT')
                                             <div class="modal-body">
+                                                <h6 class="mb-3 text-danger">Please note the following:</h6>
+                                                <ul class="mb-4">
+                                                    <li class="mb-2">This action cannot be undone</li>
+                                                    <li class="mb-2">Any payments will need to be refunded</li>
+                                                    <li class="mb-2">Vehicle will be made available for other bookings</li>
+                                                </ul>
                                                 <p>Are you sure you want to cancel this booking?</p>
                                                 <input type="hidden" name="status" value="Cancelled">
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep It</button>
-                                                <button type="submit" class="btn btn-danger">Yes, Cancel It</button>
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="bi bi-x-circle me-1"></i> Yes, Cancel It
+                                                </button>
                                             </div>
                                         </form>
                                     </div>
@@ -272,24 +305,64 @@
                             @endif
 
                             <!-- Complete Modal -->
-                            @if($booking->Status === 'Confirmed')
+                            @if($booking->Status === 'Active Rental')
                             <div class="modal fade" id="completeModal{{ $booking->BookingID }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title">Complete Booking</h5>
+                                            <h5 class="modal-title">Complete Rental</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <form action="{{ route('admin.bookings.update-status', $booking) }}" method="POST">
                                             @csrf
                                             @method('PUT')
                                             <div class="modal-body">
-                                                <p>Are you sure this rental has been completed?</p>
+                                                <h6 class="mb-3">Please ensure the following before completing:</h6>
+                                                <ul class="mb-4">
+                                                    <li class="mb-2">Vehicle has been returned</li>
+                                                    <li class="mb-2">Vehicle inspection is completed</li>
+                                                    <li class="mb-2">All payments are settled</li>
+                                                </ul>
+                                                <p>Are you sure you want to mark this rental as completed?</p>
                                                 <input type="hidden" name="status" value="Completed">
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success">Mark as Completed</button>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-check2-all me-1"></i> Complete Rental
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
+                            <!-- Start Rental Modal -->
+                            @if($booking->Status === 'Confirmed')
+                            <div class="modal fade" id="startRentalModal{{ $booking->BookingID }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Start Vehicle Rental</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form action="{{ route('admin.bookings.update-status', $booking) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-body">
+                                                <h6 class="mb-3">Please ensure the following before starting the rental:</h6>
+                                                <ul class="mb-4">
+                                                    <li class="mb-2">Customer has provided valid ID</li>
+                                                    <li class="mb-2">Payment has been processed</li>
+                                                    <li class="mb-2">Vehicle inspection is completed</li>
+                                                </ul>
+                                                <p>Are you sure you want to start the rental period for this vehicle?</p>
+                                                <input type="hidden" name="status" value="Active Rental">
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Start Rental</button>
                                             </div>
                                         </form>
                                     </div>
@@ -325,19 +398,68 @@
 @push('styles')
 <style>
 .booking-table-container {
-    padding-bottom: 60px; /* Add padding at bottom */
+    padding-bottom: 60px;
     position: relative;
 }
 
 .dropdown-menu {
     position: absolute;
-    z-index: 1000;
-    transform: translate3d(0px, 40px, 0px) !important;
+    z-index: 1021; /* Increased z-index */
 }
 
-/* Ensure last row actions are visible */
+.table td {
+    position: relative; /* Add relative positioning */
+}
+
+.table .dropdown {
+    position: static; /* Change to static */
+}
+
+.table .dropdown-menu {
+    right: 0;
+    left: auto;
+    transform: none !important; /* Remove transform */
+}
+
+/* Remove the previous transform rules that were causing issues */
 tr:last-child .dropdown-menu {
-    transform: translate3d(0px, -100%, 0px) !important;
+    transform: none !important;
+}
+
+.processing {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.processing .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+    border-width: 0.15em;
 }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        const form = modal.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalHtml = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.classList.add('processing');
+                submitBtn.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </span>
+                    Processing...`;
+            });
+        }
+    });
+});
+</script>
 @endpush

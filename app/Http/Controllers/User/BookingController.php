@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
 
 class BookingController extends Controller
@@ -29,61 +30,45 @@ class BookingController extends Controller
     public function store(Request $request, Vehicle $vehicle)
     {
         $validated = $request->validate([
-            'pickup_date' => 'required|date|after:today',
-            'return_date' => 'required|date|after:pickup_date',
-            'pickup_location' => 'required|string|max:100'
+            'pickup_date' => 'required|date',
+            'return_date' => 'required|date|after_or_equal:pickup_date',
+            'pickup_location' => 'required|string',
+            'total_cost' => 'required|numeric|min:0'
         ]);
 
-        // Check vehicle availability for the selected dates
-        $conflictingBookings = Booking::where('VehicleID', $vehicle->VehicleID)
-            ->where('Status', '!=', 'Cancelled')
-            ->where(function($query) use ($validated) {
-                $query->whereBetween('PickupDate', [$validated['pickup_date'], $validated['return_date']])
-                    ->orWhereBetween('ReturnDate', [$validated['pickup_date'], $validated['return_date']]);
-            })->exists();
-
-        if ($conflictingBookings) {
-            return back()->withErrors(['dates' => 'Vehicle is not available for the selected dates']);
-        }
-
-        // Calculate total cost
-        $days = Carbon::parse($validated['pickup_date'])->diffInDays(Carbon::parse($validated['return_date']));
-        $totalCost = $days * $vehicle->DailyRate;
-
+        // Create booking
         $booking = Booking::create([
             'UserID' => Auth::id(),
             'VehicleID' => $vehicle->VehicleID,
             'PickupDate' => $validated['pickup_date'],
             'ReturnDate' => $validated['return_date'],
             'PickupLocation' => $validated['pickup_location'],
-            'TotalCost' => $totalCost,
-            'Status' => 'Pending'
+            'TotalCost' => $validated['total_cost'],
+            'Status' => 'Pending',
+            'AdditionalServices' => $request->has('additional_services') ? json_encode($request->additional_services) : null
         ]);
 
-        return redirect()->route('user.bookings.show', $booking)
+        return redirect()->route('user.bookings.index')
             ->with('success', 'Booking created successfully');
     }
 
     public function show(Booking $booking)
     {
-        $this->authorize('view', $booking);
+        if (! Gate::allows('view', $booking)) {
+            abort(403);
+        }
         $booking->load('vehicle');
         return view('user.bookings.show', compact('booking'));
     }
 
     public function cancel(Booking $booking)
     {
-        $this->authorize('cancel', $booking);
-
-        if (!in_array($booking->Status, ['Pending', 'Confirmed'])) {
-            return back()->withErrors(['status' => 'This booking cannot be cancelled']);
+        // Check if user can cancel this booking
+        if (Auth::id() !== $booking->UserID || !in_array($booking->Status, ['Pending', 'Confirmed'])) {
+            abort(403, 'You are not authorized to cancel this booking.');
         }
 
         $booking->update(['Status' => 'Cancelled']);
-
-        if ($booking->vehicle->Status === 'Rented') {
-            $booking->vehicle->update(['Status' => 'Available']);
-        }
 
         return redirect()->route('user.bookings.index')
             ->with('success', 'Booking cancelled successfully');

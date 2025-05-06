@@ -65,19 +65,22 @@ Route::post('admin/logout', [LoginController::class, 'adminLogout'])->name('admi
 
 // User routes
 Route::middleware(['auth'])->group(function () {
+    // Profile routes
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('bookings', [BookingController::class, 'index'])->name('user.bookings.index');
-    Route::get('bookings/create/{vehicle}', [BookingController::class, 'create'])->name('user.bookings.create');
-    Route::post('bookings/{vehicle}', [BookingController::class, 'store'])->name('user.bookings.store');
-    Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('user.bookings.show');
-    Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('user.bookings.cancel');
+    // Single booking routes group
+    Route::prefix('bookings')->name('user.bookings.')->group(function () {
+        Route::get('/', [BookingController::class, 'index'])->name('index');
+        Route::get('/create/{vehicle}', [FleetController::class, 'bookNow'])->name('create');
+        Route::post('/store/{vehicle}', [BookingController::class, 'store'])->name('store');
+        Route::get('/{booking}', [BookingController::class, 'show'])->name('show');
+        Route::post('/{booking}/cancel', [BookingController::class, 'cancel'])->name('cancel');
+    });
 
     Route::redirect('settings', 'settings/profile');
-
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
@@ -129,6 +132,9 @@ Route::middleware(['auth:admin'])->prefix('admin')->name('admin.')->group(functi
     
     // Other routes...
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // ...existing routes...
+    Route::get('/customers/{customer}/edit', [AdminCustomerController::class, 'edit'])->name('customers.edit');
+    Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
     // ...existing routes...
 });
 

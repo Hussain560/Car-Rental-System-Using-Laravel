@@ -36,6 +36,10 @@ class Customer extends Authenticatable
         'LastLogin' => 'datetime',
     ];
 
+    protected $attributes = [
+        'AccountStatus' => 'Active' // Set default status
+    ];
+
     public function getAuthPassword()
     {
         return $this->Password;
@@ -44,5 +48,10 @@ class Customer extends Authenticatable
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'UserID', 'CustomerID');
+    }
+
+    public function getAccountStatusAttribute($value)
+    {
+        return $value ?: 'Active'; // Ensure we always have a status
     }
 }

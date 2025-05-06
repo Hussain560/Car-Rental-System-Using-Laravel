@@ -123,4 +123,25 @@ class FleetController extends Controller
             'message' => $isAvailable ? 'Vehicle is available' : 'Vehicle is not available for selected dates'
         ]);
     }
+
+    public function bookNow(Request $request, $id)
+    {
+        $vehicle = Vehicle::findOrFail($id);
+        
+        // Get dates from all possible request parameters (query string, post data, etc)
+        $pickup_date = $request->pickup_date ?: $request->query('pickup_date');
+        $return_date = $request->return_date ?: $request->query('return_date');
+
+        // Validate dates exist
+        if (!$pickup_date || !$return_date) {
+            return redirect()->route('fleet')
+                ->with('error', 'Please select rental dates first');
+        }
+
+        // Format dates to ensure consistency
+        $pickup_date = date('Y-m-d', strtotime($pickup_date));
+        $return_date = date('Y-m-d', strtotime($return_date));
+        
+        return view('user.bookings.create', compact('vehicle', 'pickup_date', 'return_date'));
+    }
 }

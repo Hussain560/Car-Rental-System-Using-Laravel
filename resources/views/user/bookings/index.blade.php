@@ -19,11 +19,17 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h5 class="card-title mb-1">{{ $booking->vehicle->Make }} {{ $booking->vehicle->Model }}</h5>
-                                <span class="badge bg-{{ 
-                                    $booking->Status === 'Pending' ? 'warning' : 
-                                    ($booking->Status === 'Confirmed' ? 'success' : 
-                                    ($booking->Status === 'Completed' ? 'info' : 'danger')) 
-                                }}">{{ $booking->Status }}</span>
+                                @php
+                                    $statusClass = match($booking->Status) {
+                                        'Pending' => 'bg-warning text-dark',    // Yellow with dark text
+                                        'Confirmed' => 'bg-info text-white',    // Light blue
+                                        'Active Rental' => 'bg-primary',        // Changed from 'In Progress'
+                                        'Completed' => 'bg-success',            // Green
+                                        'Cancelled' => 'bg-danger',             // Red
+                                        default => 'bg-secondary'               // Gray
+                                    };
+                                @endphp
+                                <span class="badge {{ $statusClass }}">{{ $booking->Status }}</span>
                             </div>
                             <div class="text-end">
                                 <div class="fs-5 fw-bold mb-1">

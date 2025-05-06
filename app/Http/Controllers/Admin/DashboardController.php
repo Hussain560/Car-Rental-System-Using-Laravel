@@ -62,12 +62,13 @@ class DashboardController extends Controller
             'rented_vehicles' => $rentedVehicleIds->count(),
             'maintenance_vehicles' => Vehicle::where('Status', 'Maintenance')->count(),
             'active_bookings' => Booking::whereBetween('PickupDate', [$monthStart, $monthEnd])
-                ->where('Status', 'Confirmed')
+                ->where('Status', 'Active Rental')
                 ->count(),
             'total_customers' => Customer::where('AccountStatus', 'Active')->count(), // Changed from CarRentalUser
             'monthly_revenue' => Booking::whereBetween('BookingDate', [$monthStart, $monthEnd])
                 ->where('Status', '!=', 'Cancelled')
                 ->sum('TotalCost'),
+            'active_rentals' => Booking::where('Status', 'Active Rental')->count(),
         ];
     }
 

@@ -148,10 +148,11 @@
 
                                     <div class="mt-auto pt-3 text-end">
                                         @auth
-                                            <a href="{{ route('user.bookings.create', ['vehicle' => $vehicle, 'pickup_date' => request('pickup_date'), 'return_date' => request('return_date')]) }}" 
-                                               class="btn btn-primary btn-book">
-                                               Book Now
-                                            </a>
+                                            <a href="{{ route('user.bookings.create', [
+                                                'vehicle' => $vehicle->VehicleID,
+                                                'pickup_date' => request('pickup_date'),
+                                                'return_date' => request('return_date')
+                                            ]) }}" class="btn btn-primary">Book Now</a>
                                         @else
                                             <button type="button" 
                                                     class="btn btn-primary btn-book" 

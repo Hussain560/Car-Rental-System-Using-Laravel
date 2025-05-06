@@ -11,7 +11,7 @@
                         <i class="bi bi-arrow-left"></i>
                     </a>
                     <div>
-                        <h1 class="page-header-title">Customer Profile</h1>
+                        <h1 class="page-header-title">{{ $customer->FirstName }} {{ $customer->LastName }}</h1>
                         <span class="badge bg-{{ 
                             $customer->AccountStatus === 'Active' ? 'success' : 
                             ($customer->AccountStatus === 'Suspended' ? 'danger' : 'secondary') 
@@ -20,6 +20,9 @@
                 </div>
             </div>
             <div class="col-auto">
+                <a href="{{ route('admin.customers.edit', $customer) }}" class="btn btn-primary me-2">
+                    <i class="bi bi-pencil me-1"></i> Edit Information
+                </a>
                 @if($customer->AccountStatus === 'Active')
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" 
                             data-bs-target="#suspendModal">
@@ -50,7 +53,11 @@
                             </span>
                         </div>
                         <h4 class="mb-1">{{ $customer->FirstName }} {{ $customer->LastName }}</h4>
-                        <span class="text-muted">Customer since {{ $customer->CreatedAt->format('M Y') }}</span>
+                        <span class="text-muted">Customer since {{ $customer->created_at ? $customer->created_at->format('F Y') : 'N/A' }}</span>
+                        <div class="mt-2 small text-muted">
+                            <div>Last Login: {{ $customer->LastLogin ? $customer->LastLogin->format('M d, Y h:i A') : 'Never' }}</div>
+                            <div>Last Updated : {{ $customer->updated_at->format('M d, Y h:i A') }}</div>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -168,21 +175,9 @@
                                 <tr>
                                     <td>#{{ $booking->BookingID }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            @if($booking->vehicle->ImagePath)
-                                                <img src="{{ Storage::url($booking->vehicle->ImagePath) }}" 
-                                                     alt="{{ $booking->vehicle->Make }} {{ $booking->vehicle->Model }}" 
-                                                     class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                                            @else
-                                                <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" 
-                                                     style="width: 40px; height: 40px;">
-                                                    <i class="bi bi-car-front text-white"></i>
-                                                </div>
-                                            @endif
-                                            <div>
-                                                <span class="d-block">{{ $booking->vehicle->Make }} {{ $booking->vehicle->Model }}</span>
-                                                <small class="text-muted">{{ $booking->vehicle->LicensePlate }}</small>
-                                            </div>
+                                        <div>
+                                            <span class="d-block">{{ $booking->vehicle->Make }} {{ $booking->vehicle->Model }}</span>
+                                            <small class="text-muted">{{ $booking->vehicle->LicensePlate }}</small>
                                         </div>
                                     </td>
                                     <td>
@@ -225,66 +220,7 @@
     </div>
 </div>
 
-<!-- Status Update Modals -->
-@if($customer->AccountStatus === 'Active')
-<!-- Suspend Modal -->
-<div class="modal fade" id="suspendModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Suspend Customer Account</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('admin.customers.update-status', $customer) }}" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <p>Are you sure you want to suspend this customer's account?</p>
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        This will prevent the customer from making new bookings.
-                    </div>
-                    <input type="hidden" name="status" value="Suspended">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Suspend Account</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-@endif
 
-@if($customer->AccountStatus === 'Suspended')
-<!-- Activate Modal -->
-<div class="modal fade" id="activateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Activate Customer Account</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('admin.customers.update-status', $customer) }}" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <p>Are you sure you want to activate this customer's account?</p>
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        This will allow the customer to make bookings again.
-                    </div>
-                    <input type="hidden" name="status" value="Active">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Activate Account</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-@endif
 
 @push('styles')
 <style>

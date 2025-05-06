@@ -227,93 +227,17 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.customers.show', $customer) }}">
-                                            <i class="bi bi-person-badge me-2"></i> View Profile
+                                        <a href="{{ route('admin.customers.show', $customer) }}" class="dropdown-item">
+                                            <i class="bi bi-eye me-2"></i> View Details
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.customers.bookings', $customer) }}">
-                                            <i class="bi bi-calendar2-check me-2"></i> Booking History
+                                        <a href="{{ route('admin.customers.edit', $customer) }}" class="dropdown-item">
+                                            <i class="bi bi-pencil me-2"></i> Edit
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    @if($customer->AccountStatus === 'Active')
-                                    <li>
-                                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" 
-                                                data-bs-target="#suspendModal{{ $customer->UserID }}">
-                                            <i class="bi bi-slash-circle me-2"></i> Suspend Account
-                                        </button>
-                                    </li>
-                                    @elseif($customer->AccountStatus === 'Suspended')
-                                    <li>
-                                        <button type="button" class="dropdown-item text-success" data-bs-toggle="modal" 
-                                                data-bs-target="#activateModal{{ $customer->UserID }}">
-                                            <i class="bi bi-check-circle me-2"></i> Activate Account
-                                        </button>
-                                    </li>
-                                    @endif
                                 </ul>
                             </div>
-
-                            <!-- Suspend Modal -->
-                            @if($customer->AccountStatus === 'Active')
-                            <div class="modal fade" id="suspendModal{{ $customer->UserID }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Suspend Customer Account</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <form action="{{ route('admin.customers.update-status', $customer) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-body">
-                                                <p>Are you sure you want to suspend this customer's account?</p>
-                                                <div class="alert alert-warning">
-                                                    <i class="bi bi-exclamation-triangle me-2"></i>
-                                                    This will prevent the customer from making new bookings.
-                                                </div>
-                                                <input type="hidden" name="status" value="Suspended">
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-danger">Suspend Account</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
-
-                            <!-- Activate Modal -->
-                            @if($customer->AccountStatus === 'Suspended')
-                            <div class="modal fade" id="activateModal{{ $customer->UserID }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Activate Customer Account</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <form action="{{ route('admin.customers.update-status', $customer) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-body">
-                                                <p>Are you sure you want to activate this customer's account?</p>
-                                                <div class="alert alert-info">
-                                                    <i class="bi bi-info-circle me-2"></i>
-                                                    This will allow the customer to make bookings again.
-                                                </div>
-                                                <input type="hidden" name="status" value="Active">
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success">Activate Account</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
                         </td>
                     </tr>
                     @endforeach
@@ -357,6 +281,19 @@
     .bg-soft-primary {
         background-color: rgba(13, 110, 253, 0.1);
         color: #0d6efd;
+    }
+    .table-responsive {
+        padding-bottom: 100px;
+    }
+
+    .dropdown-menu {
+        margin-top: 0 !important;
+    }
+
+    tr:last-child .dropdown-menu {
+        bottom: 100%;
+        top: auto !important;
+        transform: none !important;
     }
 </style>
 @endpush

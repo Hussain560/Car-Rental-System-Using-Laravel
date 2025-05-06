@@ -29,7 +29,23 @@ class LoginController extends Controller
 
         $user = Customer::where('Username', $credentials['Username'])->first();
 
-        if ($user && Hash::check($credentials['Password'], $user->Password)) {
+        if (!$user) {
+            return back()->withErrors([
+                'Username' => 'The provided credentials do not match our records.',
+            ])->onlyInput('Username');
+        }
+
+        if ($user->AccountStatus === 'suspended') {
+            return back()->withErrors([
+                'Username' => 'Your account has been suspended. Please contact support.',
+            ])->onlyInput('Username');
+        }
+
+        if (Hash::check($credentials['Password'], $user->Password)) {
+            // Update last login timestamp
+            $user->LastLogin = now();
+            $user->save();
+            
             Auth::login($user);
             $request->session()->regenerate();
             return redirect()->intended(route('home'));

@@ -23,6 +23,7 @@ class Kernel extends HttpKernel
     protected $middlewareGroups = [
         'web' => [
             // ...existing middleware...
+            \App\Http\Middleware\CustomerAuth::class,
         ],
 
         'api' => [

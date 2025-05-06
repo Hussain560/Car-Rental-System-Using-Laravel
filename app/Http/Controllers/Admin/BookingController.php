@@ -30,7 +30,7 @@ class BookingController extends Controller
             'confirmed' => Booking::where('Status', 'Confirmed')->count(),
             'completed' => Booking::where('Status', 'Completed')->count(),
             'cancelled' => Booking::where('Status', 'Cancelled')->count(),
-            'active' => Booking::whereIn('Status', ['Pending', 'Confirmed'])->count(),
+            'active' => Booking::where('Status', 'Active Rental')->count(),
             'revenue' => Booking::where('Status', '!=', 'Cancelled')->sum('TotalCost')
         ];
 
@@ -39,22 +39,15 @@ class BookingController extends Controller
 
     public function show(Booking $booking)
     {
-        $booking->load(['user', 'vehicle']);
+        $booking->load(['customer', 'vehicle']);
         return view('admin.bookings.show', compact('booking'));
     }
 
     public function updateStatus(Request $request, Booking $booking)
     {
         $validated = $request->validate([
-            'status' => 'required|in:Pending,Confirmed,In Progress,Completed,Cancelled'
+            'status' => 'required|in:Pending,Confirmed,Active Rental,Completed,Cancelled'
         ]);
-
-        // Update vehicle status when booking status changes
-        if ($validated['status'] === 'In Progress') {
-            $booking->vehicle->update(['Status' => 'Rented']);
-        } elseif ($validated['status'] === 'Completed' || $validated['status'] === 'Cancelled') {
-            $booking->vehicle->update(['Status' => 'Available']);
-        }
 
         $booking->update([
             'Status' => $validated['status']
@@ -81,5 +74,18 @@ class BookingController extends Controller
         // Implementation depends on your export library choice
 
         return response()->download('bookings-export.csv');
+    }
+
+    protected function isReadyForRental(Booking $booking)
+    {
+        return $booking->Status === 'Confirmed' && 
+               now()->startOfDay()->lte($booking->PickupDate->startOfDay()) && 
+               now()->startOfDay()->lte($booking->ReturnDate->startOfDay());
+    }
+
+    protected function canComplete(Booking $booking)
+    {
+        return $booking->Status === 'Active Rental' && 
+               now()->startOfDay()->equalTo($booking->ReturnDate->startOfDay());
     }
 }

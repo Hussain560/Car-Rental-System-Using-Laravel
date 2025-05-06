@@ -91,8 +91,19 @@ class CustomerController extends Controller
             'AccountStatus' => $validated['status']
         ]);
 
-        return redirect()->route('admin.customers.index')
-            ->with('success', 'Customer status updated successfully');
+        // Force logout if customer is suspended
+        if ($validated['status'] === 'Suspended') {
+            // Force logout from all sessions
+            \Session::getHandler()->destroy($customer->id);
+        }
+
+        $message = $validated['status'] === 'Suspended' 
+            ? 'Customer account has been suspended.'
+            : 'Customer account has been activated.';
+
+        return redirect()
+            ->back()
+            ->with('success', $message);
     }
 
     public function bookingHistory(Customer $customer)
@@ -103,5 +114,32 @@ class CustomerController extends Controller
             ->paginate(10);
             
         return view('admin.customers.bookings', compact('customer', 'bookings'));
+    }
+
+    public function edit(Customer $customer)
+    {
+        return view('admin.customers.edit', compact('customer'));
+    }
+
+    public function update(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'FirstName' => 'required|string|max:50',
+            'LastName' => 'required|string|max:50',
+            'Email' => 'required|email|unique:customers,Email,' . $customer->CustomerID . ',CustomerID',
+            'PhoneNumber' => 'required|string|max:15',
+            'EmergencyPhone' => 'required|string|max:15',
+            'Address' => 'required|string',
+            'Gender' => 'required|in:Male,Female',
+            'DateOfBirth' => 'required|date',
+            'LicenseExpiryDate' => 'required|date|after:today',
+            'AccountStatus' => 'required|in:Active,Suspended',
+        ]);
+
+        $customer->update($validated);
+
+        return redirect()
+            ->route('admin.customers.show', $customer)
+            ->with('success', 'Customer information updated successfully');
     }
 }

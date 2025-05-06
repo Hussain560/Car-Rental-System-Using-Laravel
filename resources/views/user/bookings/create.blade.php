@@ -34,14 +34,14 @@
                                     <div class="col-md-6">
                                         <label class="form-label">Pick-up Date</label>
                                         <input type="text" class="form-control" 
-                                               value="{{ \Carbon\Carbon::parse($pickup_date)->format('M d, Y') }}" 
+                                               value="{{ date('M d, Y', strtotime($pickup_date)) }}" 
                                                readonly>
                                         <input type="hidden" name="pickup_date" value="{{ $pickup_date }}">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Return Date</label>
                                         <input type="text" class="form-control" 
-                                               value="{{ \Carbon\Carbon::parse($return_date)->format('M d, Y') }}" 
+                                               value="{{ date('M d, Y', strtotime($return_date)) }}" 
                                                readonly>
                                         <input type="hidden" name="return_date" value="{{ $return_date }}">
                                     </div>
@@ -143,16 +143,16 @@
                                         <h6 class="card-title">Cost Breakdown</h6>
                                         <div class="d-flex justify-content-between mb-2">
                                             <span>Daily Rate × <span id="summary-days">0</span> days</span>
-                                            <span id="summary-base-cost">0.00</span>
+                                            <span><x-currency :amount="0" /><span id="summary-base-cost">0.00</span></span>
                                         </div>
-                                        <div class="d-flex justify-content-between mb-2" id="services-cost-row" style="display: none !important;">
+                                        <div class="d-flex justify-content-between mb-2" id="services-cost-row">
                                             <span>Additional Services</span>
-                                            <span id="summary-services-cost">0.00</span>
+                                            <span><x-currency :amount="0" /><span id="summary-services-cost">0.00</span></span>
                                         </div>
                                         <hr>
                                         <div class="d-flex justify-content-between fw-bold">
                                             <span>Total Cost</span>
-                                            <span id="summary-total-cost">0.00</span>
+                                            <span><x-currency :amount="0" /><span id="summary-total-cost">0.00</span></span>
                                         </div>
                                     </div>
                                 </div>
@@ -246,45 +246,17 @@ document.addEventListener('DOMContentLoaded', function() {
         prevBtn.style.display = step > 1 ? 'block' : 'none';
         nextBtn.style.display = step < totalSteps ? 'block' : 'none';
         confirmBtn.style.display = step === totalSteps ? 'block' : 'none';
-    }
 
-    // Validate current step
-    function validateStep(step) {
-        const currentStepEl = document.getElementById(`step-${step}`);
-        const requiredFields = currentStepEl.querySelectorAll('input[required], select[required]');
-        let isValid = true;
-
-        requiredFields.forEach(field => {
-            if (!field.value) {
-                field.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                field.classList.remove('is-invalid');
-            }
-        });
-
-        // Special validation for dates in step 1
-        if (step === 1) {
-            const pickupDate = document.querySelector('input[name="pickup_date"]');
-            const returnDate = document.querySelector('input[name="return_date"]');
-            
-            if (pickupDate.value && returnDate.value) {
-                if (new Date(returnDate.value) <= new Date(pickupDate.value)) {
-                    returnDate.classList.add('is-invalid');
-                    isValid = false;
-                }
-            }
+        // Update total cost when reaching summary step
+        if (step === 4) {
+            updateTotalCost();
         }
-
-        return isValid;
     }
 
     // Event listeners for navigation buttons
     nextBtn.addEventListener('click', () => {
-        if (validateStep(currentStep)) {
-            currentStep++;
-            updateStep(currentStep);
-        }
+        currentStep++;
+        updateStep(currentStep);
     });
 
     prevBtn.addEventListener('click', () => {
@@ -292,24 +264,26 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStep(currentStep);
     });
 
-    // Date validation for rental period
-    const pickupDate = document.querySelector('input[name="pickup_date"]');
-    const returnDate = document.querySelector('input[name="return_date"]');
+    // Add form submission handler
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Add total cost to form
+        const totalCost = parseFloat(document.getElementById('summary-total-cost').textContent);
+        const totalCostInput = document.createElement('input');
+        totalCostInput.type = 'hidden';
+        totalCostInput.name = 'total_cost';
+        totalCostInput.value = totalCost;
+        form.appendChild(totalCostInput);
 
-    if (pickupDate && returnDate) {
-        pickupDate.addEventListener('change', function() {
-            returnDate.min = this.value;
-            if (returnDate.value && returnDate.value < this.value) {
-                returnDate.value = this.value;
-            }
-        });
-    }
+        // Disable submit button to prevent double submission
+        const submitButton = document.getElementById('confirm-booking');
+        submitButton.disabled = true;
+        submitButton.innerHTML = 'Processing...';
 
-    // Additional services cost calculation
-    const openKmCheckbox = document.getElementById('open_km');
-    if (openKmCheckbox) {
-        openKmCheckbox.addEventListener('change', updateTotalCost);
-    }
+        // Submit form
+        this.submit();
+    });
 
     function updateTotalCost() {
         const pickupDate = new Date(document.querySelector('input[name="pickup_date"]').value);
@@ -325,29 +299,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const servicesCost = openKm ? 70 : 0;
         const totalCost = baseCost + servicesCost;
         
-        // Update summary
+        // Update summary with currency formatting
         document.getElementById('summary-days').textContent = days;
         document.getElementById('summary-base-cost').textContent = baseCost.toFixed(2);
         document.getElementById('summary-services-cost').textContent = servicesCost.toFixed(2);
         document.getElementById('summary-total-cost').textContent = totalCost.toFixed(2);
         document.getElementById('services-cost-row').style.display = openKm ? 'flex' : 'none';
         
-        // Update dates
-        document.getElementById('summary-pickup-date').textContent = pickupDate.toLocaleDateString();
-        document.getElementById('summary-return-date').textContent = returnDate.toLocaleDateString();
+        // Always update dates in summary
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('summary-pickup-date').textContent = pickupDate.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('summary-return-date').textContent = returnDate.toLocaleDateString('en-US', dateOptions);
         
         // Update services summary
         const servicesDiv = document.getElementById('summary-services');
         servicesDiv.textContent = openKm ? 'Open KM (Unlimited kilometers)' : 'No additional services selected';
     }
 
-    // Add event listeners for dates
-    document.querySelectorAll('input[type="date"]').forEach(input => {
-        input.addEventListener('change', updateTotalCost);
-    });
+    // Add event listener for additional services
+    const openKmCheckbox = document.getElementById('open_km');
+    if (openKmCheckbox) {
+        openKmCheckbox.addEventListener('change', updateTotalCost);
+    }
 
-    // Initialize the form
+    // Initialize the form and calculate initial cost
     updateStep(currentStep);
+    updateTotalCost();
 });
 </script>
 @endpush

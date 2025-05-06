@@ -2,26 +2,29 @@
 
 namespace App\Policies;
 
-use App\Models\Booking;
-use App\Models\CarRentalUser;
 use App\Models\Admin;
+use App\Models\Customer;
+use App\Models\Booking;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class BookingPolicy
 {
-    public function viewAny(CarRentalUser|Admin $user): bool
+    use HandlesAuthorization;
+
+    public function viewAny(Customer|Admin $user): bool
     {
         return true;
     }
 
-    public function view(CarRentalUser|Admin $user, Booking $booking): bool
+    public function view(Customer|Admin $user, Booking $booking): bool
     {
         if ($user instanceof Admin) {
             return true;
         }
-        return $user->UserID === $booking->UserID;
+        return $user->UserID === $booking->UserID; // Changed from id to UserID
     }
 
-    public function create(CarRentalUser $user): bool
+    public function create(Customer $user): bool
     {
         return $user->AccountStatus === 'Active';
     }
@@ -31,11 +34,13 @@ class BookingPolicy
         return true;
     }
 
-    public function cancel(CarRentalUser|Admin $user, Booking $booking): bool
+    public function cancel(Customer|Admin $user, Booking $booking): bool
     {
         if ($user instanceof Admin) {
             return true;
         }
+
+        // Allow customer to cancel their own pending or confirmed bookings
         return $user->UserID === $booking->UserID && 
                in_array($booking->Status, ['Pending', 'Confirmed']);
     }

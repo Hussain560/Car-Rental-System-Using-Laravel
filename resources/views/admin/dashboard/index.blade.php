@@ -128,7 +128,7 @@
                     <div>
                         <h6 class="card-title mb-0">Active Bookings</h6>
                         <h2 class="mb-0">{{ $stats['active_bookings'] }}</h2>
-                        <small class="text-muted">This month</small>
+                        <small class="text-muted">Now</small>
                     </div>
                 </div>
             </div>
@@ -232,7 +232,12 @@
                             <td>{{ $booking->vehicle->Make }} {{ $booking->vehicle->Model }}</td>
                             <td>{{ \Carbon\Carbon::parse($booking->PickupDate)->format('M d, Y') }}</td>
                             <td>
-                                <span class="badge bg-{{ $booking->Status === 'Pending' ? 'warning' : ($booking->Status === 'Confirmed' ? 'success' : ($booking->Status === 'Completed' ? 'info' : 'danger')) }}">
+                                <span class="badge bg-{{ 
+                                    $booking->Status === 'Pending' ? 'warning text-dark' : 
+                                    ($booking->Status === 'Confirmed' ? 'info text-white' : 
+                                    ($booking->Status === 'Active Rental' ? 'primary' :
+                                    ($booking->Status === 'Completed' ? 'success' : 'danger'))) 
+                                }}">
                                     {{ $booking->Status }}
                                 </span>
                             </td>
