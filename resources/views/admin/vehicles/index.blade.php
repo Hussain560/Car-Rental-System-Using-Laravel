@@ -36,7 +36,6 @@
                     <select name="status" id="status" class="form-select">
                         <option value="">All Status</option>
                         <option value="Available" {{ request('status') == 'Available' ? 'selected' : '' }}>Available</option>
-                        <option value="Rented" {{ request('status') == 'Rented' ? 'selected' : '' }}>Rented</option>
                         <option value="Maintenance" {{ request('status') == 'Maintenance' ? 'selected' : '' }}>Maintenance</option>
                     </select>
                 </div>
@@ -206,8 +205,45 @@
 
     <!-- Pagination -->
     @if($vehicles->hasPages())
-        <div class="mt-4">
-            {{ $vehicles->links() }}
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination">
+                    {{-- Previous Page --}}
+                    @if ($vehicles->onFirstPage())
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    @else
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $vehicles->previousPageUrl() }}" rel="prev">Previous</a>
+                        </li>
+                    @endif
+
+                    {{-- Pagination Elements --}}
+                    @foreach ($vehicles->getUrlRange(1, $vehicles->lastPage()) as $page => $url)
+                        @if ($page == $vehicles->currentPage())
+                            <li class="page-item active">
+                                <span class="page-link">{{ $page }}</span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                            </li>
+                        @endif
+                    @endforeach
+
+                    {{-- Next Page --}}
+                    @if ($vehicles->hasMorePages())
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $vehicles->nextPageUrl() }}" rel="next">Next</a>
+                        </li>
+                    @else
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
         </div>
     @endif
 </div>
@@ -223,4 +259,31 @@
         });
     });
 </script>
+@endpush
+
+@push('styles')
+<style>
+/* Add pagination styles */
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0;
+}
+
+.page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+</style>
 @endpush

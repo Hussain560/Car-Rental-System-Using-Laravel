@@ -383,6 +383,7 @@
             'Fortuner': 'SUV', 
             'Highlander': 'SUV',
             'Land Cruiser': 'SUV',
+            'Land Cruiser Prado': 'SUV',
             '4Runner': 'SUV',
             'Sequoia': 'SUV',
             'Hilux': 'SUV'

@@ -177,10 +177,49 @@
         </div>
     @endif
 
-    <!-- Pagination with enhanced styling -->
-    <div class="pagination-container">
-        {{ $vehicles->links() }}
-    </div>
+    <!-- Pagination -->
+    @if($vehicles->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination">
+                    {{-- Previous Page --}}
+                    @if ($vehicles->onFirstPage())
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    @else
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $vehicles->appends(request()->except('page'))->previousPageUrl() }}" rel="prev">Previous</a>
+                        </li>
+                    @endif
+
+                    {{-- Pagination Elements --}}
+                    @foreach ($vehicles->getUrlRange(1, $vehicles->lastPage()) as $page => $url)
+                        @if ($page == $vehicles->currentPage())
+                            <li class="page-item active">
+                                <span class="page-link">{{ $page }}</span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $vehicles->appends(request()->except('page'))->url($page) }}">{{ $page }}</a>
+                            </li>
+                        @endif
+                    @endforeach
+
+                    {{-- Next Page --}}
+                    @if ($vehicles->hasMorePages())
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $vehicles->appends(request()->except('page'))->nextPageUrl() }}" rel="next">Next</a>
+                        </li>
+                    @else
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+    @endif
 </div>
 
 <!-- Login Modal -->
@@ -334,6 +373,51 @@
 
 .pagination-container {
     margin-top: 2rem;
+}
+
+/* Add pagination styles */
+.pagination {
+    margin: 0;
+    gap: 0.25rem;
+}
+
+.page-link {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    font-size: 0.875rem;
+    min-width: 2.5rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.page-link:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #0d6efd;
+    z-index: 2;
+}
+
+.page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+    font-weight: 500;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.pagination-container {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
 }
 
 @media (max-width: 767.98px) {
